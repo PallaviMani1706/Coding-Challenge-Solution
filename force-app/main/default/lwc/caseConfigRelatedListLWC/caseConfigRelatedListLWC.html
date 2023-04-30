@@ -1,0 +1,32 @@
+<template>
+  <lightning-layout class="slds-m-top_x-small">
+    <article class="slds-card slds-card_boundary">
+        <div class="slds-page-header slds-page-header_joined slds-page-header_bleed slds-shrink-none test-headerRegion slds-is-relative">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate ">
+            <div class="slds-grid">
+                <lightning-icon icon-name="standard:custom" size="small"></lightning-icon>
+            </div>
+            <div class="slds-media__body">
+              <h2 class="slds-card__header-title">
+                <a class="slds-card__header-link" onclick={handleViewAll}>Case Configs</a>
+              </h2>
+            </div>
+            <div class="slds-no-flex">
+                <lightning-button label="Send" onclick={updateCaseStatusandSR} disabled={disableSendButton}></lightning-button>
+            </div>
+          </header>
+        </div>
+        <!--<hr>-->
+            <div class="slds-grid listDisplays">
+                <lightning-datatable 
+                                    columns={columns}
+                                    data={caseConfigrelatedRecords}
+                                    key-field="Id" hide-checkbox-column="true">
+                </lightning-datatable>   
+            </div>
+            <footer class="slds-card__footer">
+                <a onclick={handleViewAll}>View All</a>
+            </footer>  
+      </article>                       
+</lightning-layout> 
+</template>

@@ -1,0 +1,33 @@
+<template>
+    <lightning-layout class="slds-m-top_x-small">
+        <article class="slds-card slds-card_boundary">
+            <div class="slds-page-header slds-page-header_joined slds-page-header_bleed slds-shrink-none test-headerRegion slds-is-relative">
+              <header class="slds-media slds-media_center slds-has-flexi-truncate ">
+                <div class="slds-grid">
+                    <lightning-icon icon-name="standard:custom" size="small"></lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                  <h2 class="slds-card__header-title">
+                    <a class="slds-card__header-link" onclick={handleNavigationToConfig}>Available Configs</a>
+                  </h2>
+                </div>
+                <div class="slds-no-flex">
+                    <lightning-button label="Add" onclick={getSelectedIdAction} disabled={disableAddbutton}></lightning-button>
+                </div>
+              </header>
+            </div>
+            <!--<hr>-->
+                <div class="slds-grid listDisplays">
+                    <lightning-datatable class="related-list"
+                                        columns={columns}
+                                        data={configRelatedRecords}
+                                        key-field="Id">
+                    </lightning-datatable>   
+                </div>
+                <footer class="slds-card__footer">
+                    <a onclick={handleNavigationToConfig}>View All</a>
+                </footer>  
+          </article>                       
+    </lightning-layout>
+    <c-case-config-related-list-l-w-c record-id={recordId}></c-case-config-related-list-l-w-c>
+</template>

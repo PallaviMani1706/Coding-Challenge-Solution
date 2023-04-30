@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Config_Label_should_be_unique</fullName>
+    <active>true</active>
+    <description>Config Label should be unique for each record.</description>
+    <errorConditionFormula>AND(
+NOT(ISBLANK(VLOOKUP(
+$ObjectType.Config__c.Fields.Name ,
+$ObjectType.Config__c.Fields.Name, Name
+))),
+OR(
+ISNEW(), ISCHANGED(Name)
+)
+)</errorConditionFormula>
+    <errorDisplayField>Name</errorDisplayField>
+    <errorMessage>Already a record exists with this Label. please try with different label.</errorMessage>
+</ValidationRule>
