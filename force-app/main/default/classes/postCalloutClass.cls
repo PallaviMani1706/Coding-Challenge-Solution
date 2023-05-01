@@ -19,7 +19,6 @@ public class postCalloutClass {
         }
         try{ 
        update casetoUpdate;
-       System.debug('CaseStatus::'+casetoUpdate.Status);
         }catch(system.Exception e){
            System.debug('error::'+e.getMessage());
         }

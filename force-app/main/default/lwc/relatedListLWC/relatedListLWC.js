@@ -22,17 +22,38 @@ export default class RelatedListLWC extends NavigationMixin(LightningElement) {
     existingCaseConfigsNames;
     configsToAddLst;
     errors;
-    disableAddbutton=false;
+    disableAddButton=false;
     caseConfigExists;
+    recordcreationStatus;
 
     @api columns = [
-        { label: 'Label', fieldName: 'Name', type:'text', hideDefaultActions: 'true',fixedWidth:'100px', cellAttributes: { alignment: 'left' }},
-        { label: 'Type', fieldName: 'Type__c',type:'text', hideDefaultActions: 'true' ,fixedWidth:'100px', cellAttributes: { alignment: 'left' }},
-        { label: 'Amount', fieldName: 'Amount__c', type:'number', hideDefaultActions: 'true',fixedWidth:'100px', cellAttributes: { alignment: 'left' }}        
+        { label: 'Label', 
+         fieldName: 'Name', 
+         type:'text', 
+         hideDefaultActions: 'true',
+         fixedWidth:'100px', 
+         cellAttributes: { alignment: 'left' }},
+        { label: 'Type', 
+          fieldName: 'Type__c',
+          type:'text', 
+          hideDefaultActions: 'true' ,
+          fixedWidth:'100px', 
+          cellAttributes: { alignment: 'left' }},
+        { label: 'Amount', 
+          fieldName: 'Amount__c', 
+          type:'number', 
+          hideDefaultActions: 'true',
+          fixedWidth:'100px', 
+          cellAttributes: { alignment: 'left' }}        
     ];
 
     renderedCallback() {
         loadStyle(this, relatedListResource + '/relatedList.css')
+        if(this.status == 'Closed'){
+            this.disableAddButton = true;
+        }else{
+            this.disableAddButton = false;
+        }
     }
     
     @wire(getRecord, { recordId: '$recordId', fields })
@@ -42,7 +63,6 @@ export default class RelatedListLWC extends NavigationMixin(LightningElement) {
     wireConfigRecords(result) {
         this.configRecords = result;
         this.fetchConfigRecords(this.configRecords);
-        console.log('Case recordId::',this.recordId);
     }
 
     fetchConfigRecords(result) {
@@ -87,32 +107,36 @@ export default class RelatedListLWC extends NavigationMixin(LightningElement) {
     getSelectedIdAction(event){
         this.selectedConfigRows = this.template.querySelector("lightning-datatable").getSelectedRows();
         window.console.log('selectedConfigRows# ' + JSON.stringify(this.selectedConfigRows));
-        console.log('Cs::',this.status);
-        if(this.status!='Closed'){
-        this.getCaseConfigExists();
-        }else{
+        if(this.selectedConfigRows.length==0){
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'error',
-                    message: 'You can not add configs as the case status is closed',
+                    message: 'Please Select some record to Add it to the case',
                     variant: 'error',
                 }),
             );  
+        }else{
+            if(this.status!='Closed'){
+                this.getCaseConfigExists();
+                }else{
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'error',
+                            message: 'You can not add configs as the case status is closed',
+                            variant: 'error',
+                        }),
+                    );  
+                }
         }
     }
  
     getCaseConfigExists(){
-        console.log('selectedConfigRowsinGCCE::',this.selectedConfigRows);
-        
         showCaseConfigRecords({ caseId: this.recordId })
         .then((result) => {
-            console.log('resultInGCCE::',result);
+            let caseConfigsAlreadyExists=[];
             if(result.length>0){
-                let caseConfigsAlreadyExists=[];
                 result.forEach(caseConfigRecs => {
-                    console.log('inside 1 loop');
                     this.selectedConfigRows.forEach(configSelected => {
-                        console.log('inside 2 loop');
                      if(caseConfigRecs.Name == configSelected.Name){
                         caseConfigsAlreadyExists.push(caseConfigRecs.Name);
                      }else{
@@ -121,30 +145,40 @@ export default class RelatedListLWC extends NavigationMixin(LightningElement) {
                   }) 
                 }) 
                 this.existingCaseConfigsNames = caseConfigsAlreadyExists;
-                console.log('existingCaseConfigsNames::',this.existingCaseConfigsNames.length);
-            }
-            if(this.existingCaseConfigsNames.length>0){
-                this.dispatchEvent(
-                    new ShowToastEvent({
-                        title: 'error',
-                        message: this.existingCaseConfigsNames+' Config records is already added to the case.please unselet it and try!!',
-                        variant: 'error',
-                    }),
-                );
+                if(caseConfigsAlreadyExists.length>0){
+                    this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'error',
+                            message: this.existingCaseConfigsNames+' Config records is already added to the case.please unselet it and try!!',
+                            variant: 'error',
+                        }),
+                    );
+                }
             }
             else{
                 if(this.selectedConfigRows.length!=0){
                     createCaseConfigRecords({ CaseId: this.recordId, configRecords: this.selectedConfigRows })
                     .then((result) => {
-                    console.log('Success');
-                    this.template.querySelector('lightning-datatable').selectedRows=[];
-                    this.dispatchEvent(
-                        new ShowToastEvent({
-                            title: 'Success',
-                            message: 'Added Config records to case',
-                            variant: 'Success',
-                        }),
-                    ); 
+                    this.recordcreationStatus = result;
+                    if(this.recordcreationStatus == 'Success'){
+                        this.template.querySelector('lightning-datatable').selectedRows=[];
+                        this.dispatchEvent(
+                            new ShowToastEvent({
+                                title: 'Success',
+                                message: 'Added Config records to case',
+                                variant: 'Success',
+                            }),
+                        ); 
+                    }
+                    else{
+                        this.dispatchEvent(
+                            new ShowToastEvent({
+                                title: 'error',
+                                message: 'Error Adding config records to case'+this.recordcreationStatus,
+                                variant: 'error',
+                            }),
+                        );  
+                    }
                     this.template.querySelector('c-case-config-related-list-l-w-c').childMethod();
                     })
                     .catch(error => {

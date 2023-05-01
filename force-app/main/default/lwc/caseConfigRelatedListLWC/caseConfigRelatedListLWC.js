@@ -6,8 +6,11 @@ import showCaseConfigRecords from '@salesforce/apex/relatedListLWCController.sho
 import updateCaseStatusandSR from '@salesforce/apex/postCalloutClass.updateCaseStatusandSR';
 import sendPostRequest from '@salesforce/apex/postCalloutClass.sendPostRequest';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import CASE_STATUS from "@salesforce/schema/Case.Status";
 import { refreshApex } from '@salesforce/apex';
 
+const fields = [CASE_STATUS];
 export default class caseConfigRelatedListLWC extends NavigationMixin(LightningElement) {
     @api recordId;
     configRecords;
@@ -18,15 +21,41 @@ export default class caseConfigRelatedListLWC extends NavigationMixin(LightningE
     disableSendButton=false;
 
     @api columns = [
-        { label: 'Label', fieldName: 'Name', type:'text', hideDefaultActions: 'true',fixedWidth:'100px', cellAttributes: { alignment: 'left' }},
-        { label: 'Type', fieldName: 'Type__c',type:'text', hideDefaultActions: 'true' ,fixedWidth:'100px', cellAttributes: { alignment: 'left' }},
-        { label: 'Amount', fieldName: 'Amount__c', type:'number', hideDefaultActions: 'true',fixedWidth:'100px', cellAttributes: { alignment: 'left' }}        
+        { label: 'Label', 
+          fieldName: 'Name', 
+          type:'text', 
+          hideDefaultActions: 'true',
+          fixedWidth:'100px', 
+          cellAttributes: { alignment: 'left' }},
+        { label: 'Type', 
+          fieldName: 'Type__c',
+          type:'text', 
+          hideDefaultActions: 'true' ,
+          fixedWidth:'100px', 
+          cellAttributes: { alignment: 'left' }},
+        { label: 'Amount', 
+          fieldName: 'Amount__c', 
+          type:'number', 
+          hideDefaultActions: 'true',
+          fixedWidth:'100px', 
+          cellAttributes: { alignment: 'left' }}        
     ];
-
+    
     renderedCallback() {
         loadStyle(this, relatedListResource + '/relatedList.css')
+        if(this.status == 'Closed'){
+            this.disableSendButton = true;
+        }else{
+            this.disableSendButton = false;
+        }
     }
 
+    @wire(getRecord, {recordId: "$recordId", fields })
+    caseStatus;
+
+    get status() {
+        return getFieldValue(this.caseStatus.data, CASE_STATUS);
+    }
 
     @wire (showCaseConfigRecords, { caseId: '$recordId' }) 
     wiredCaseConfigRecords(result) {
@@ -48,13 +77,11 @@ export default class caseConfigRelatedListLWC extends NavigationMixin(LightningE
   
              };
              parseData.push(dataFormat);
-             //console.log('data::',JSON.stringify(parseData));
             })
             this.caseConfigrelatedRecords = parseData;
          }
          else if(result.error){
           this.errors = result.error;
-           //console.log('error::',this.errors);
          } 
     }
     
@@ -79,13 +106,11 @@ export default class caseConfigRelatedListLWC extends NavigationMixin(LightningE
     }
 
     updateCaseStatusandSR(event){
-        console.log('inside function');
-        this.disableSendButton = true;
       updateCaseStatusandSR({caseId: this.recordId })
       .then((result) => {
-        console.log('Success');
         sendPostRequest({caseId: this.recordId })
-        .then((result) => {
+        .then((result) => {           
+        this.disableSendButton = true;
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success',
@@ -93,7 +118,7 @@ export default class caseConfigRelatedListLWC extends NavigationMixin(LightningE
                     variant: 'Success',
                 }),
               );
-              //eval("$A.get('e.force:refreshView').fire();"); 
+            eval("$A.get('e.force:refreshView').fire();"); 
         })
         .catch(error => {
             this.dispatchEvent(
